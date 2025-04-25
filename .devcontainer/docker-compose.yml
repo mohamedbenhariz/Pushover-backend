@@ -1,0 +1,45 @@
+version: '3.8'
+
+services:
+  pushover-backend:
+    build: 
+      context: .
+      dockerfile: Dockerfile
+    volumes:
+      - ../..:/workspaces:cached
+    command: sleep infinity
+    networks:
+      - vpn_network  # Use a custom network instead of network_mode
+    depends_on:
+      - mysqldb
+
+  mysqldb:
+    image: mysql:8.0
+    restart: always
+    volumes:
+      - mysql_data:/var/lib/mysql
+    container_name: mysqldb
+    environment:
+      MYSQL_ROOT_PASSWORD: securevpn
+      MYSQL_DATABASE: vpndb
+      MYSQL_USER: vpnuser
+      MYSQL_PASSWORD: vpnpass
+    networks:
+      - vpn_network
+
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin
+    networks:
+      - vpn_network  # Use the custom network
+    environment:
+      PMA_HOST: mysqldb
+      PMA_PORT: 3306
+    ports:
+      - "8088:80"  # Map phpmyadmin's port for access
+
+networks:
+  vpn_network:
+    driver: bridge
+
+volumes:
+  mysql_data:

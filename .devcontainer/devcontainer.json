@@ -1,0 +1,37 @@
+// .devcontainer/devcontainer.json
+{
+    "name": "pushover-backend",
+    "dockerComposeFile": "docker-compose.yml",
+	  "service": "pushover-backend",
+	  "workspaceFolder": "/workspaces/${localWorkspaceFolderBasename}",
+    	// Configure tool-specific properties.
+    "customizations": {
+      // Configure properties specific to VS Code.
+      "vscode": {
+        // Add the IDs of extensions you want installed when the container is created.
+        "extensions": [
+            "dbaeumer.vscode-eslint",
+            "esbenp.prettier-vscode",
+            "saoudrizwan.claude-dev",
+            "mongodb.mongodb-vscode"
+        ]
+      }
+    },
+    "forwardPorts": [
+        3001,
+        8088
+    ],
+    "portsAttributes": {
+        "3001": {
+            "label": "Server (Backend)"
+        },
+        "8088": {
+            "label": "phpmyadmin (database)"
+        }
+    },
+    // "postCreateCommand": "npm install",
+    "remoteUser": "node",
+    "containerEnv": {
+      "NODE_ENV": "development"
+    }
+  }
