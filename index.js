@@ -17,6 +17,14 @@ app.use(cors());
 app.use(express.json());
 
 // Routes
+app.get('/', (req, res) => {
+  res.json({
+    message: 'Welcome to the IoT Device Management API',
+    version: '1.0.0',
+    pipeline: process.env.PIPELINE_NUMBER || '0'
+  });
+});
+// Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/devices', deviceRoutes);
 app.use('/api/notifications', notificationRoutes);

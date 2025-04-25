@@ -3,10 +3,15 @@ import { logger } from '../utils/logger.js';
 
 export const getDevices = async (req, res, next) => {
   try {
+    // Check if user is available
+    if (!req.user || !req.user.id) {
+      return res.status(401).json({ error: 'User not authenticated' });
+    }
+    
     const userId = req.user.id;
 
     const result = await query(
-      'SELECT * FROM devices WHERE user_id = $1 ORDER BY created_at DESC',
+      'SELECT * FROM devices WHERE user_id = ? ORDER BY created_at DESC',
       [userId]
     );
 
@@ -18,12 +23,25 @@ export const getDevices = async (req, res, next) => {
 
 export const addDevice = async (req, res, next) => {
   try {
+    // Check if user is available
+    if (!req.user || !req.user.id) {
+      return res.status(401).json({ error: 'User not authenticated' });
+    }
+    
     const userId = req.user.id;
-    const { name, type } = req.body;
+    const { name, token, platform } = req.body;
 
+    // Insert the device
+    const insertResult = await query(
+      'INSERT INTO devices (user_id, name, token, platform) VALUES (?, ?, ?, ?)',
+      [userId, name, token, platform]
+    );
+    
+    // Get the inserted device
+    const deviceId = insertResult.rows.insertId;
     const result = await query(
-      'INSERT INTO devices (user_id, name, type) VALUES ($1, $2, $3) RETURNING *',
-      [userId, name, type]
+      'SELECT * FROM devices WHERE id = ?',
+      [deviceId]
     );
 
     res.status(201).json(result.rows[0]);
@@ -34,13 +52,25 @@ export const addDevice = async (req, res, next) => {
 
 export const updateDevice = async (req, res, next) => {
   try {
+    // Check if user is available
+    if (!req.user || !req.user.id) {
+      return res.status(401).json({ error: 'User not authenticated' });
+    }
+    
     const userId = req.user.id;
     const deviceId = req.params.id;
-    const { name } = req.body;
+    const { name, token, platform } = req.body;
 
+    // Update the device
+    await query(
+      'UPDATE devices SET name = ?, token = ?, platform = ? WHERE id = ? AND user_id = ?',
+      [name, token, platform, deviceId, userId]
+    );
+    
+    // Check if the device was updated
     const result = await query(
-      'UPDATE devices SET name = $1 WHERE id = $2 AND user_id = $3 RETURNING *',
-      [name, deviceId, userId]
+      'SELECT * FROM devices WHERE id = ? AND user_id = ?',
+      [deviceId, userId]
     );
 
     if (result.rows.length === 0) {
@@ -55,17 +85,29 @@ export const updateDevice = async (req, res, next) => {
 
 export const deleteDevice = async (req, res, next) => {
   try {
+    // Check if user is available
+    if (!req.user || !req.user.id) {
+      return res.status(401).json({ error: 'User not authenticated' });
+    }
+    
     const userId = req.user.id;
     const deviceId = req.params.id;
 
-    const result = await query(
-      'DELETE FROM devices WHERE id = $1 AND user_id = $2 RETURNING *',
+    // Check if the device exists
+    const checkResult = await query(
+      'SELECT * FROM devices WHERE id = ? AND user_id = ?',
       [deviceId, userId]
     );
 
-    if (result.rows.length === 0) {
+    if (checkResult.rows.length === 0) {
       return res.status(404).json({ error: 'Device not found' });
     }
+
+    // Delete the device
+    await query(
+      'DELETE FROM devices WHERE id = ? AND user_id = ?',
+      [deviceId, userId]
+    );
 
     res.json({ message: 'Device deleted successfully' });
   } catch (error) {

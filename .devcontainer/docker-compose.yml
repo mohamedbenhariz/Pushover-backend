@@ -18,7 +18,7 @@ services:
     restart: always
     volumes:
       - mysql_data:/var/lib/mysql
-    container_name: mysqldb
+    container_name: mysqldb1
     environment:
       MYSQL_ROOT_PASSWORD: securevpn
       MYSQL_DATABASE: vpndb

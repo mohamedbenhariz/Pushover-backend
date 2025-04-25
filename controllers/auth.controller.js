@@ -10,7 +10,7 @@ export const register = async (req, res, next) => {
 
     // Check if user exists
     const userExists = await query(
-      'SELECT * FROM users WHERE email = $1',
+      'SELECT * FROM users WHERE email = ?',
       [email]
     );
 
@@ -26,9 +26,15 @@ export const register = async (req, res, next) => {
     const apiKey = generateApiKey();
 
     // Create user
-    const result = await query(
-      'INSERT INTO users (name, email, password, api_key) VALUES ($1, $2, $3, $4) RETURNING id, name, email, api_key',
+    await query(
+      'INSERT INTO users (username, email, password, api_key) VALUES (?, ?, ?, ?)',
       [name, email, hashedPassword, apiKey]
+    );
+    
+    // Get the inserted user
+    const result = await query(
+      'SELECT id, username, email, api_key FROM users WHERE email = ?',
+      [email]
     );
 
     const user = result.rows[0];
@@ -43,7 +49,7 @@ export const register = async (req, res, next) => {
     res.status(201).json({
       user: {
         id: user.id,
-        name: user.name,
+        name: user.username,
         email: user.email,
         apiKey: user.api_key
       },
@@ -60,7 +66,7 @@ export const login = async (req, res, next) => {
 
     // Find user
     const result = await query(
-      'SELECT * FROM users WHERE email = $1',
+      'SELECT * FROM users WHERE email = ?',
       [email]
     );
 
@@ -87,7 +93,7 @@ export const login = async (req, res, next) => {
     res.json({
       user: {
         id: user.id,
-        name: user.name,
+        name: user.username,
         email: user.email,
         apiKey: user.api_key
       },
@@ -104,7 +110,7 @@ export const refreshApiKey = async (req, res, next) => {
     const newApiKey = generateApiKey();
 
     await query(
-      'UPDATE users SET api_key = $1 WHERE id = $2',
+      'UPDATE users SET api_key = ? WHERE id = ?',
       [newApiKey, userId]
     );
 
